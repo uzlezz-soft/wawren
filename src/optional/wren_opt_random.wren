@@ -10,7 +10,7 @@ foreign class Random {
       if (seed.isEmpty) Fiber.abort("Sequence cannot be empty.")
 
       // TODO: Empty sequence.
-      var seeds = []
+      let seeds = []
       for (element in seed) {
         if (!(element is Num)) Fiber.abort("Sequence elements must all be numbers.")
 
@@ -19,7 +19,7 @@ foreign class Random {
       }
 
       // Cycle the values to fill in any missing slots.
-      var i = 0
+      let i = 0
       while (seeds.count < 16) {
         seeds.add(seeds[i])
         i = i + 1
@@ -54,24 +54,24 @@ foreign class Random {
   sample(list, count) {
     if (count > list.count) Fiber.abort("Not enough elements to sample.")
 
-    var result = []
+    let result = []
 
     // The algorithm described in "Programming pearls: a sample of brilliance".
     // Use a hash map for sample sizes less than 1/4 of the population size and
     // an array of booleans for larger samples. This simple heuristic improves
     // performance for large sample sizes as well as reduces memory usage.
     if (count * 4 < list.count) {
-      var picked = {}
+      let picked = {}
       for (i in list.count - count...list.count) {
-        var index = int(i + 1)
+        let index = int(i + 1)
         if (picked.containsKey(index)) index = i
         picked[index] = true
         result.add(list[index])
       }
     } else {
-      var picked = List.filled(list.count, false)
+      let picked = List.filled(list.count, false)
       for (i in list.count - count...list.count) {
-        var index = int(i + 1)
+        let index = int(i + 1)
         if (picked[index]) index = i
         picked[index] = true
         result.add(list[index])
@@ -86,8 +86,8 @@ foreign class Random {
 
     // Fisher-Yates shuffle.
     for (i in 0...list.count - 1) {
-      var from = int(i, list.count)
-      var temp = list[from]
+      let from = int(i, list.count)
+      let temp = list[from]
       list[from] = list[i]
       list[i] = temp
     }

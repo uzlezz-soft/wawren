@@ -1,7 +1,7 @@
 class Meta {
   static getModuleVariables(module) {
     if (!(module is String)) Fiber.abort("Module name must be a string.")
-    var result = getModuleVariables_(module)
+    let result = getModuleVariables_(module)
     if (result != null) return result
 
     Fiber.abort("Could not find a module named '%(module)'.")
@@ -10,7 +10,7 @@ class Meta {
   static eval(source) {
     if (!(source is String)) Fiber.abort("Source code must be a string.")
 
-    var closure = compile_(source, false, false)
+    let closure = compile_(source, false, false)
     // TODO: Include compile errors.
     if (closure == null) Fiber.abort("Could not compile source code.")
 
