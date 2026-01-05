@@ -1971,36 +1971,6 @@ static void finishArgumentList(Compiler* compiler, Signature* signature)
     validateNumParameters(compiler, ++signature->arity);
 
     // Parse block expression
-    /*
-    if (match(compiler, TOKEN_LEFT_BRACE))
-    {
-        Compiler fnCompiler;
-        initCompiler(&fnCompiler, compiler->parser, compiler, false);
-
-        // Make a dummy signature to track the arity.
-        Signature fnSignature = { "", 0, SIG_METHOD, 0 };
-
-        // Parse the parameter list, if any.
-        if (match(compiler, TOKEN_PIPE))
-        {
-            finishParameterList(&fnCompiler, &fnSignature);
-            consume(compiler, TOKEN_PIPE, "Expect '|' after function parameters.");
-        }
-
-        fnCompiler.fn->arity = fnSignature.arity;
-
-        finishBody(&fnCompiler);
-
-        // Name the function based on the method its passed to.
-        char blockName[MAX_METHOD_SIGNATURE + 18];
-        int blockLength;
-        signatureToString(signature, blockName, &blockLength);
-        //memmove(blockName + blockLength, " block argument", 16);
-        sprintf(blockName + blockLength, " block argument %d", signature->arity - 1);
-
-        endCompiler(&fnCompiler, blockName, blockLength + 15);
-    }*/
-    // Parse block expression
     if (match(compiler, TOKEN_PIPE) || match(compiler, TOKEN_PIPEPIPE))
     {
         Compiler fnCompiler;
