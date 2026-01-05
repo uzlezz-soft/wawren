@@ -323,7 +323,7 @@ class List is Sequence {
     return other
   }
 
-  sort() { sort {|low, high| low < high } }
+  sort() { sort |low, high| { low < high } }
 
   sort(comparer) {
     if (!(comparer is Fn)) {
@@ -358,7 +358,7 @@ class List is Sequence {
     return i+1
   }
 
-  toString { "[%(join(", "))]" }
+  toString { "[${join(", ")}]" }
 
   +(other) {
     var result = this[0..-1]
@@ -392,7 +392,7 @@ class Map is Sequence {
     for (key in keys) {
       if (!first) result = result + ", "
       first = false
-      result = result + "%(key): %(this[key])"
+      result = result + "${key}: ${this[key]}"
     }
 
     return result + "}"
@@ -414,7 +414,7 @@ class MapEntry {
   key { _key }
   value { _value }
 
-  toString { "%(_key):%(_value)" }
+  toString { "${_key}:${_value}" }
 }
 
 class MapKeySequence is Sequence {
@@ -479,5 +479,5 @@ class ClassAttributes {
     _attributes = attributes
     _methods = methods
   }
-  toString { "attributes:%(_attributes) methods:%(_methods)" }
+  toString { "attributes:${_attributes} methods:${_methods}" }
 }

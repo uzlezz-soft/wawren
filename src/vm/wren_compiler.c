@@ -40,7 +40,7 @@
 // The maximum depth that interpolation can nest. For example, this string has
 // three levels:
 //
-//      "outside %(one + "%(two + "%(three)")")"
+//      "outside ${one + "${two + "${three}"}"}"
 #define MAX_INTERPOLATION_NESTING 8
 
 // The buffer size used to format a compile error message, excluding the header
@@ -66,7 +66,7 @@ typedef enum
   TOKEN_STAR,
   TOKEN_SLASH,
   TOKEN_PERCENT,
-  TOKEN_HASH,
+  TOKEN_AT,
   TOKEN_PLUS,
   TOKEN_MINUS,
   TOKEN_LTLT,
@@ -121,7 +121,7 @@ typedef enum
   // A portion of a string literal preceding an interpolated expression. This
   // string:
   //
-  //     "a %(b) c %(d) e"
+  //     "a ${b} c ${d} e"
   //
   // is tokenized to:
   //
@@ -191,11 +191,11 @@ typedef struct
   // interpolation and how many unmatched "(" there are. This is particularly
   // complex because interpolation can nest:
   //
-  //     " %( " %( inner ) " ) "
+  //     " ${ " ${ inner } " } "
   //
   // This tracks that state. The parser maintains a stack of ints, one for each
   // level of current interpolation nesting. Each value is the number of
-  // unmatched "(" that are waiting to be closed.
+  // unmatched "{" that are waiting to be closed.
   int parens[MAX_INTERPOLATION_NESTING];
   int numParens;
 
@@ -618,7 +618,7 @@ static Keyword keywords[] =
   {"super",     5, TOKEN_SUPER},
   {"this",      4, TOKEN_THIS},
   {"true",      4, TOKEN_TRUE},
-  {"var",       3, TOKEN_VAR},
+  {"let",       3, TOKEN_VAR},
   {"while",     5, TOKEN_WHILE},
   {NULL,        0, TOKEN_EOF} // Sentinel to mark the end of the array.
 };
@@ -989,12 +989,12 @@ static void readString(Parser* parser)
       break;
     }
 
-    if (c == '%')
+    if (c == '$')
     {
       if (parser->numParens < MAX_INTERPOLATION_NESTING)
       {
         // TODO: Allow format string.
-        if (nextChar(parser) != '(') lexError(parser, "Expect '(' after '%%'.");
+        if (nextChar(parser) != '{') lexError(parser, "Expect '{' after '$'.");
         
         parser->parens[parser->numParens++] = 1;
         type = TOKEN_INTERPOLATION;
@@ -1011,7 +1011,7 @@ static void readString(Parser* parser)
       {
         case '"':  wrenByteBufferWrite(parser->vm, &string, '"'); break;
         case '\\': wrenByteBufferWrite(parser->vm, &string, '\\'); break;
-        case '%':  wrenByteBufferWrite(parser->vm, &string, '%'); break;
+        case '$':  wrenByteBufferWrite(parser->vm, &string, '$'); break;
         case '0':  wrenByteBufferWrite(parser->vm, &string, '\0'); break;
         case 'a':  wrenByteBufferWrite(parser->vm, &string, '\a'); break;
         case 'b':  wrenByteBufferWrite(parser->vm, &string, '\b'); break;
@@ -1066,36 +1066,36 @@ static void nextToken(Parser* parser)
     char c = nextChar(parser);
     switch (c)
     {
-      case '(':
-        // If we are inside an interpolated expression, count the unmatched "(".
+      case '{':
+        // If we are inside an interpolated expression, count the unmatched "{".
         if (parser->numParens > 0) parser->parens[parser->numParens - 1]++;
-        makeToken(parser, TOKEN_LEFT_PAREN);
+        makeToken(parser, TOKEN_LEFT_BRACE);
         return;
         
-      case ')':
-        // If we are inside an interpolated expression, count the ")".
+      case '}':
+        // If we are inside an interpolated expression, count the "}".
         if (parser->numParens > 0 &&
             --parser->parens[parser->numParens - 1] == 0)
         {
-          // This is the final ")", so the interpolation expression has ended.
-          // This ")" now begins the next section of the template string.
+          // This is the final "}", so the interpolation expression has ended.
+          // This "}" now begins the next section of the template string.
           parser->numParens--;
           readString(parser);
           return;
         }
         
-        makeToken(parser, TOKEN_RIGHT_PAREN);
+        makeToken(parser, TOKEN_RIGHT_BRACE);
         return;
         
       case '[': makeToken(parser, TOKEN_LEFT_BRACKET); return;
       case ']': makeToken(parser, TOKEN_RIGHT_BRACKET); return;
-      case '{': makeToken(parser, TOKEN_LEFT_BRACE); return;
-      case '}': makeToken(parser, TOKEN_RIGHT_BRACE); return;
+      case '(': makeToken(parser, TOKEN_LEFT_PAREN); return;
+      case ')': makeToken(parser, TOKEN_RIGHT_PAREN); return;
       case ':': makeToken(parser, TOKEN_COLON); return;
       case ',': makeToken(parser, TOKEN_COMMA); return;
       case '*': makeToken(parser, TOKEN_STAR); return;
       case '%': makeToken(parser, TOKEN_PERCENT); return;
-      case '#': {
+      /*case '#': {
         // Ignore shebang on the first line.
         if (parser->currentLine == 1 && peekChar(parser) == '!' && peekNextChar(parser) == '/')
         {
@@ -1105,7 +1105,8 @@ static void nextToken(Parser* parser)
         // Otherwise we treat it as a token
         makeToken(parser, TOKEN_HASH); 
         return;
-      }
+      }*/
+      case '@': makeToken(parser, TOKEN_AT); return;
       case '^': makeToken(parser, TOKEN_CARET); return;
       case '+': makeToken(parser, TOKEN_PLUS); return;
       case '-': makeToken(parser, TOKEN_MINUS); return;
@@ -1968,7 +1969,68 @@ static void finishArgumentList(Compiler* compiler, Signature* signature)
   {
     ignoreNewlines(compiler);
     validateNumParameters(compiler, ++signature->arity);
-    expression(compiler);
+
+    // Parse block expression
+    /*
+    if (match(compiler, TOKEN_LEFT_BRACE))
+    {
+        Compiler fnCompiler;
+        initCompiler(&fnCompiler, compiler->parser, compiler, false);
+
+        // Make a dummy signature to track the arity.
+        Signature fnSignature = { "", 0, SIG_METHOD, 0 };
+
+        // Parse the parameter list, if any.
+        if (match(compiler, TOKEN_PIPE))
+        {
+            finishParameterList(&fnCompiler, &fnSignature);
+            consume(compiler, TOKEN_PIPE, "Expect '|' after function parameters.");
+        }
+
+        fnCompiler.fn->arity = fnSignature.arity;
+
+        finishBody(&fnCompiler);
+
+        // Name the function based on the method its passed to.
+        char blockName[MAX_METHOD_SIGNATURE + 18];
+        int blockLength;
+        signatureToString(signature, blockName, &blockLength);
+        //memmove(blockName + blockLength, " block argument", 16);
+        sprintf(blockName + blockLength, " block argument %d", signature->arity - 1);
+
+        endCompiler(&fnCompiler, blockName, blockLength + 15);
+    }*/
+    // Parse block expression
+    if (match(compiler, TOKEN_PIPE) || match(compiler, TOKEN_PIPEPIPE))
+    {
+        Compiler fnCompiler;
+        initCompiler(&fnCompiler, compiler->parser, compiler, false);
+
+        // Make a dummy signature to track the arity.
+        Signature fnSignature = { "", 0, SIG_METHOD, 0 };
+
+        // Parse the parameter list, if any.
+        if (compiler->parser->previous.type != TOKEN_PIPEPIPE && !match(compiler, TOKEN_PIPE))
+        {
+            finishParameterList(&fnCompiler, &fnSignature);
+            consume(compiler, TOKEN_PIPE, "Expect '|' after function parameters.");
+        }
+
+        fnCompiler.fn->arity = fnSignature.arity;
+
+        consume(compiler, TOKEN_LEFT_BRACE, "Expect '{' after function parameters");
+        finishBody(&fnCompiler);
+
+        // Name the function based on the method its passed to.
+        char blockName[MAX_METHOD_SIGNATURE + 18];
+        int blockLength;
+        signatureToString(signature, blockName, &blockLength);
+        //memmove(blockName + blockLength, " block argument", 16);
+        sprintf(blockName + blockLength, " block argument %d", signature->arity - 1);
+
+        endCompiler(&fnCompiler, blockName, blockLength + 15);
+    }
+    else expression(compiler);
   }
   while (match(compiler, TOKEN_COMMA));
 
@@ -2028,39 +2090,6 @@ static void methodCall(Compiler* compiler, Code instruction,
       finishArgumentList(compiler, &called);
     }
     consume(compiler, TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
-  }
-
-  // Parse the block argument, if any.
-  if (match(compiler, TOKEN_LEFT_BRACE))
-  {
-    // Include the block argument in the arity.
-    called.type = SIG_METHOD;
-    called.arity++;
-
-    Compiler fnCompiler;
-    initCompiler(&fnCompiler, compiler->parser, compiler, false);
-
-    // Make a dummy signature to track the arity.
-    Signature fnSignature = { "", 0, SIG_METHOD, 0 };
-
-    // Parse the parameter list, if any.
-    if (match(compiler, TOKEN_PIPE))
-    {
-      finishParameterList(&fnCompiler, &fnSignature);
-      consume(compiler, TOKEN_PIPE, "Expect '|' after function parameters.");
-    }
-
-    fnCompiler.fn->arity = fnSignature.arity;
-
-    finishBody(&fnCompiler);
-
-    // Name the function based on the method its passed to.
-    char blockName[MAX_METHOD_SIGNATURE + 15];
-    int blockLength;
-    signatureToString(&called, blockName, &blockLength);
-    memmove(blockName + blockLength, " block argument", 16);
-
-    endCompiler(&fnCompiler, blockName, blockLength + 15);
   }
 
   // TODO: Allow Grace-style mixfix methods?
@@ -2434,7 +2463,7 @@ static void literal(Compiler* compiler, bool canAssign)
 // Interpolation is syntactic sugar for calling ".join()" on a list. So the
 // string:
 //
-//     "a %(b + c) d"
+//     "a ${b + c} d"
 //
 // is compiled roughly like:
 //
@@ -3061,7 +3090,8 @@ static void forStatement(Compiler* compiler)
   // Create a scope for the hidden local variables used for the iterator.
   pushScope(compiler);
 
-  consume(compiler, TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+  bool matchParen = match(compiler, TOKEN_LEFT_PAREN);
+
   consume(compiler, TOKEN_NAME, "Expect for loop variable name.");
 
   // Remember the name of the loop variable.
@@ -3091,7 +3121,7 @@ static void forStatement(Compiler* compiler)
   null(compiler, false);
   int iterSlot = addLocal(compiler, "iter ", 5);
 
-  consume(compiler, TOKEN_RIGHT_PAREN, "Expect ')' after loop expression.");
+  if (matchParen) consume(compiler, TOKEN_RIGHT_PAREN, "Expect ')' after loop expression.");
 
   Loop loop;
   startLoop(compiler, &loop);
@@ -3129,9 +3159,7 @@ static void forStatement(Compiler* compiler)
 static void ifStatement(Compiler* compiler)
 {
   // Compile the condition.
-  consume(compiler, TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
   expression(compiler);
-  consume(compiler, TOKEN_RIGHT_PAREN, "Expect ')' after if condition.");
   
   // Jump to the else branch if the condition is false.
   int ifJump = emitJump(compiler, CODE_JUMP_IF);
@@ -3163,9 +3191,7 @@ static void whileStatement(Compiler* compiler)
   startLoop(compiler, &loop);
 
   // Compile the condition.
-  consume(compiler, TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
   expression(compiler);
-  consume(compiler, TOKEN_RIGHT_PAREN, "Expect ')' after while condition.");
 
   testExitLoop(compiler);
   loopBody(compiler);
@@ -3362,10 +3388,10 @@ static Value consumeLiteral(Compiler* compiler, const char* message)
 
 static bool matchAttribute(Compiler* compiler) {
 
-  if(match(compiler, TOKEN_HASH)) 
+  if(match(compiler, TOKEN_AT)) 
   {
     compiler->numAttributes++;
-    bool runtimeAccess = match(compiler, TOKEN_BANG);
+    bool runtimeAccess = !match(compiler, TOKEN_BANG);
     if(match(compiler, TOKEN_NAME)) 
     {
       Value group = compiler->parser->previous.value;
@@ -3416,7 +3442,7 @@ static bool matchAttribute(Compiler* compiler) {
     }
     else 
     {
-      error(compiler, "Expect an attribute definition after #.");
+      error(compiler, "Expect an attribute definition after @.");
     }
 
     consumeLine(compiler, "Expect newline after attribute.");
