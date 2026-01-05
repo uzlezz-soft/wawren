@@ -105,9 +105,9 @@ error message as a string.
 For example, if you run this program:
 
 <pre class="snippet">
-var fiber = Fiber.new {
+var fiber = Fiber.new(|| {
   123.badMethod
-}
+})
 
 var error = fiber.try()
 System.print("Caught error: " + error)

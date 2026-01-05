@@ -51,9 +51,9 @@ end of its body or until it passes control to yet another fiber. If it reaches
 the end of its body, it is considered *done*:
 
 <pre class="snippet">
-var fiber = Fiber.new {
+var fiber = Fiber.new(|| {
   System.print("It's alive!")
-}
+})
 
 System.print(fiber.isDone) //> false
 fiber.call() //> It's alive!
@@ -78,11 +78,11 @@ fiber is called, it picks up right where it left off and keeps going.
 You make a fiber yield by calling the static `yield()` method on Fiber:
 
 <pre class="snippet">
-var fiber = Fiber.new {
+var fiber = Fiber.new(|| {
   System.print("Before yield")
   Fiber.yield()
   System.print("Resumed")
-}
+})
 
 System.print("Before call") //> Before call
 fiber.call() //> Before yield
@@ -104,9 +104,9 @@ If you create a fiber using a function that takes a parameter, you can pass a
 value to it through `call()`:
 
 <pre class="snippet">
-var fiber = Fiber.new {|param|
+var fiber = Fiber.new(|param| {
   System.print(param)
-}
+})
 
 fiber.call("Here you go") //> Here you go
 </pre>
@@ -115,11 +115,11 @@ If the fiber has yielded and is waiting to resume, the value you pass to call
 becomes the return value of the `yield()` call when it resumes:
 
 <pre class="snippet">
-var fiber = Fiber.new {|param|
+var fiber = Fiber.new(|param| {
   System.print(param)
   var result = Fiber.yield()
   System.print(result)
-}
+})
 
 fiber.call("First") //> First
 fiber.call("Second") //> Second
@@ -130,9 +130,9 @@ Fibers can also pass values *back* when they yield. If you pass an argument to
 invoke the fiber:
 
 <pre class="snippet">
-var fiber = Fiber.new {
+var fiber = Fiber.new(|| {
   Fiber.yield("Reply")
-}
+})
 
 System.print(fiber.call()) //> Reply
 </pre>
@@ -154,11 +154,11 @@ some third method which finally calls yield. When that happens, *all* of those
 method calls &mdash; the entire callstack &mdash; gets suspended. For example:
 
 <pre class="snippet">
-var fiber = Fiber.new {
-  (1..10).each {|i|
+var fiber = Fiber.new(|| {
+  (1..10).each(|i| {
     Fiber.yield(i)
-  }
-}
+  })
+})
 </pre>
 
 Here, we're calling `yield()` from within a [function](functions.html) being

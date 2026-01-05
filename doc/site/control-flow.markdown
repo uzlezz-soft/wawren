@@ -30,7 +30,7 @@ The simplest branching statement, `if` lets you conditionally skip a chunk of
 code. It looks like this:
 
 <pre class="snippet">
-if (ready) System.print("go!")
+if ready System.print("go!")
 </pre>
 
 That evaluates the parenthesized expression after `if`. If it's true, then the
@@ -38,7 +38,7 @@ statement after the condition is evaluated. Otherwise it is skipped. Instead of
 a statement, you can have a [block](syntax.html#blocks):
 
 <pre class="snippet">
-if (ready) {
+if ready {
   System.print("getSet")
   System.print("go!")
 }
@@ -48,13 +48,13 @@ You may also provide an `else` branch. It will be executed if the condition is
 false:
 
 <pre class="snippet">
-if (ready) System.print("go!") else System.print("not ready!")
+if ready System.print("go!") else System.print("not ready!")
 </pre>
 
 And, of course, it can take a block too:
 
 <pre class="snippet">
-if (ready) {
+if ready {
   System.print("go!")
 } else {
   System.print("not ready!")
@@ -63,9 +63,9 @@ if (ready) {
 
 You can also use `else if` branches to handle multiple possibilities. For example, what if `ready` was not a boolean value?
 <pre class="snippet">
-if (ready == true) {
+if ready == true {
   System.print("go!")
-} else if (ready == false) {
+} else if ready == false {
   System.print("not ready!")
 } else { // If ready isn't a boolean
   System.print("not sure if I'm ready or not!")
@@ -126,8 +126,8 @@ condition continues to hold. For example:
 <pre class="snippet">
 // Hailstone sequence.
 var n = 27
-while (n != 1) {
-  if (n % 2 == 0) {
+while n != 1 {
+  if n % 2 == 0 {
     n = n / 2
   } else {
     n = 3 * n + 1
@@ -157,7 +157,7 @@ a [list](lists.html), a series of numbers, or some other "sequence" object.
 That's what `for` is, uh, for. It looks like this:
 
 <pre class="snippet">
-for (beatle in ["george", "john", "paul", "ringo"]) {
+for beatle in ["george", "john", "paul", "ringo"] {
   System.print(beatle)
 }
 </pre>
@@ -182,7 +182,7 @@ keyword all by itself. That immediately exits out of the nearest enclosing
 `while` or `for` loop.
 
 <pre class="snippet">
-for (i in [1, 2, 3, 4]) {
+for i in [1, 2, 3, 4] {
   System.print(i)           //> 1
   if (i == 3) break         //> 2
 }                           //> 3
@@ -197,7 +197,7 @@ will immediately jump to the beginning of the next loop iteration (and check the
 loop conditions).
 
 <pre class="snippet">
-for (i in [1, 2, 3, 4]) {
+for i in [1, 2, 3, 4] {
   if (i == 2) continue      //> 1
   System.print(i)           //> 3
 }                           //> 4
@@ -210,7 +210,7 @@ sequence of numbers, or loop a number of times. For that, you can create a
 [range](values.html#ranges), like so:
 
 <pre class="snippet">
-for (i in 1..100) {
+for i in 1..100 {
   System.print(i)
 }
 </pre>
@@ -219,7 +219,7 @@ This loops over the numbers from 1 to 100, including 100 itself. If you want to
 leave off the last value, use three dots instead of two:
 
 <pre class="snippet">
-for (i in 1...100) {
+for i in 1...100 {
   System.print(i)
 }
 </pre>
@@ -243,7 +243,7 @@ methods on the object that resulted from evaluating the sequence expression.
 When you write a loop like this:
 
 <pre class="snippet">
-for (i in 1..100) {
+for i in 1..100 {
   System.print(i)
 }
 </pre>

@@ -1,3 +1,12 @@
+## 0.5.0
+
+### Language
+- BREAKING: Updated string interpolation syntax: `${}` instead of `%()`
+- Dropped requirement for parens around `if`, `for` and `while` expressions
+- BREAKING: Updated block expression syntax: from `{|| ...}` to `|| {...}` (Note: it is now required to put parens around block expression in parameter list)
+- BREAKING: Updated attribute syntax: from `#source_attribute` and `#!runtime_attribute` to `@!source_attribute` and `@runtime_attribute`
+- BREAKING: `let` instead of `var`
+
 ## 0.4.0
 
 ### Language

@@ -17,7 +17,7 @@ To create a function, we call `Fn.new`, which takes a block to execute.
 To call the function, we use `.call()` on the function instance.
 
 <pre class="snippet">
-var sayHello = Fn.new { System.print("hello") }
+var sayHello = Fn.new(|| { System.print("hello") })
 
 sayHello.call() //> hello
 </pre>
@@ -28,14 +28,14 @@ Note that we'll see a shorthand syntax for creating a function below.
 
 Of course, functions aren't very useful if you can't pass values to them. The
 function above takes no arguments. To change that, you can provide a parameter
-list surrounded by `|` immediately after the opening brace of the body.
+list surrounded by `|` before the opening brace of the body.
 
 To pass arguments to the function, pass them to the `call` method:
 
 <pre class="snippet">
-var sayMessage = Fn.new {|recipient, message|
-  System.print("message for %(recipient): %(message)")
-}
+var sayMessage = Fn.new(|recipient, message| {
+  System.print("message for ${recipient}: ${message}")
+})
 
 sayMessage.call("Bob", "Good day!")
 </pre>
@@ -46,8 +46,7 @@ expects. If you pass too *many* arguments, the extras are ignored.
 ## Returning values
 
 The body of a function is a [block](syntax.html#blocks). If it is a single
-expression&mdash;more precisely if there is no newline after the `{` or
-parameter list&mdash;then the function implicitly returns the value of the
+expression&mdash;more precisely if there is no newline after the `{`&mdash;then the function implicitly returns the value of the
 expression.
 
 Otherwise, the body returns `null` by default. You can explicitly return a
@@ -55,17 +54,17 @@ value using a `return` statement. In other words, these two functions do the
 same thing:
 
 <pre class="snippet">
-Fn.new { "return value" }
+Fn.new(|| { "return value" })
 
-Fn.new {
+Fn.new(|| {
   return "return value"
-}
+})
 </pre>
 
 The return value is handed back to you when using `call`:
 
 <pre class="snippet">
-var fn = Fn.new { "some value" }
+var fn = Fn.new(|| { "some value" })
 var result = fn.call()
 System.print(result) //> some value
 </pre>
@@ -80,7 +79,7 @@ leaving the scope where the function is defined:
 class Counter {
   static create() {
     var i = 0
-    return Fn.new { i = i + 1 }
+    return Fn.new(|| { i = i + 1 })
   }
 }
 </pre>
@@ -107,7 +106,7 @@ the function is passed to a method to be called, like a callback or event.
 class Callable {
   construct new() {}
   call(name, version) {
-    System.print("called %(name) with version %(version)")
+    System.print("called ${name} with version ${version}")
   }
 }
 
@@ -123,27 +122,27 @@ using a method `where` which accepts a function:
 
 <pre class="snippet">
 var list = [1, 2, 3, 4, 5]
-var filtered = list.where(Fn.new {|value| value > 3 }) 
+var filtered = list.where(Fn.new(|value| { value > 3 })) 
 System.print(filtered.toList) //> [4, 5]
 </pre>
 
 This syntax is a bit less fun to read and write, so Wren implements the 
 _block argument_ concept. When a function is being passed to a method, 
-and is the last argument to the method, it can use a shorter syntax: 
+it can use a shorter syntax: 
 _just the block part_.
 
 Let's use a block argument for `list.where`, it's the last (only) argument:
 
 <pre class="snippet">
 var list = [1, 2, 3, 4, 5]
-var filtered = list.where {|value| value > 3 } 
+var filtered = list.where(|value| { value > 3 }) 
 System.print(filtered.toList) //> [4, 5]
 </pre>
 
 We've seen this before in a previous page using `map` and `where`:
 
 <pre class="snippet">
-numbers.map {|n| n * 2 }.where {|n| n < 100 }
+numbers.map(|n| { n * 2 }).where(|n| { n < 100 })
 </pre>
 
 ## Block argument example
@@ -185,9 +184,9 @@ because we're fine with it just being the default left mouse button.
 <pre class="snippet">
 var link = Clickable.new()
 
-link.onClick {|button|
+link.onClick(|button| {
   System.print("I was clicked by button %(button)")
-}
+})
 
 // send a left mouse click
 // normally this would happen from elsewhere
@@ -200,9 +199,9 @@ Now let's try with the extra button argument:
 <pre class="snippet">
 var contextMenu = Clickable.new()
 
-contextMenu.onClick(1) {|button|
+contextMenu.onClick(1, |button| {
   System.print("I was right-clicked")
-}
+})
 
 link.fireEvent(0)  //> (nothing happened)
 link.fireEvent(1)  //> I was right-clicked
@@ -217,16 +216,16 @@ Block arguments are purely syntax sugar for creating a function and passing it
 in one little blob of syntax. These two are equivalent:
 
 <pre class="snippet">
-onClick(Fn.new { System.print("clicked") })
+onClick(Fn.new(|| { System.print("clicked") }))
 onClick { System.print("clicked") }
 </pre>
 
 And this is just as valid:
 
 <pre class="snippet">
-var onEvent = Fn.new {|button|
-  System.print("clicked by button %(button)")
-}
+var onEvent = Fn.new(|button| {
+  System.print("clicked by button ${button}")
+})
 
 onClick(onEvent)
 onClick(1, onEvent)

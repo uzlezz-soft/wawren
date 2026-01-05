@@ -137,7 +137,7 @@ as doing:
 
 Statements are not allowed in this form (since they don't produce values), which
 means nothing starting with `class`, `for`, `if`, `import`,  `return`,
-`var`, or `while`. If you want a block that contains a single statement,
+`let`, or `while`. If you want a block that contains a single statement,
 put a newline in there:
 
 <pre class="snippet">
@@ -154,7 +154,7 @@ thing about this syntax as opposed to something like `=>` is that the *end* of
 the block has an explicit delimiter. That helps when chaining:
 
 <pre class="snippet">
-numbers.map {|n| n * 2 }.where {|n| n < 100 }
+numbers.map(|n| { n * 2 }).where(|n| { n < 100 })
 </pre>
 
 ## Precedence and Associativity

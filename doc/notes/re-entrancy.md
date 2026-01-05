@@ -110,10 +110,10 @@ Now that I think about it, you can probably already get yourself in a weird
 state if you grab the root fiber and call it. Yeah, I justed tested. This:
 
     var root = Fiber.current
-    Fiber.new {
+    Fiber.new(|| {
       root.call()
       System.print(1)
-    }.call()
+    }).call()
     System.print(2)
 
 Segfaults the VM. :( It actually dies when the called child fiber *returns*. The
