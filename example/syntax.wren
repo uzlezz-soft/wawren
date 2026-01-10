@@ -16,10 +16,10 @@ class SyntaxExample {
     fields()
 
     // Block arguments
-    fields { block }
-    fields {|a, b| block }
-    fields(argument) { block }
-    fields(argument) {|a, b| block }
+    fields(|| { block })
+    fields(|a, b| { block })
+    fields(argument, || { block })
+    fields(argument, |a, b| { block })
 
     // Static method call
     SyntaxExample.fields(1)
@@ -34,11 +34,11 @@ class SyntaxExample {
   // Method without arguments
   variables {
     // Valid local variable names.
-    var hi
-    var camelCase
-    var PascalCase
-    var abc123
-    var ALL_CAPS
+    let hi
+    let camelCase
+    let PascalCase
+    let abc123
+    let ALL_CAPS
   }
 
   // Method with empty argument list
@@ -61,24 +61,32 @@ class SyntaxExample {
   print(a, b) { System.print(a + b) }
 
   // Operators
-  +(other) { "infix + %(other)" }
-  -(other) { "infix - %(other)" }
-  *(other) { "infix * %(other)" }
-  /(other) { "infix / %(other)" }
-  %(other) { "infix \% %(other)" }
-  <(other) { "infix < %(other)" }
-  >(other) { "infix > %(other)" }
-  <=(other) { "infix <= %(other)" }
-  >=(other) { "infix >= %(other)" }
-  ==(other) { "infix == %(other)" }
-  !=(other) { "infix != %(other)" }
-  &(other) { "infix & %(other)" }
-  |(other) { "infix | %(other)" }
+  +(other) { "infix + ${other}" }
+  -(other) { "infix - ${other}" }
+  *(other) { "infix * ${other}" }
+  /(other) { "infix / ${other}" }
+  %(other) { "infix \$ ${other}" }
+  <(other) { "infix < ${other}" }
+  >(other) { "infix > ${other}" }
+  <=(other) { "infix <= ${other}" }
+  >=(other) { "infix >= ${other}" }
+  ==(other) { "infix == ${other}" }
+  !=(other) { "infix != ${other}" }
+  &(other) { "infix & ${other}" }
+  |(other) { "infix | ${other}" }
 
   ! { "prefix !" }
   ~ { "prefix ~" }
   - { "prefix -" }
 }
+
+record Record(a, b) {}
+
+// Record.empty()
+// Record.new(a, b)
+// Getters and setters for a, b
+// Record instance.clone()
+// Record instance.withA(newA), withB(newB), etc
 
 // `class`, `is`
 class ReservedWords is SyntaxExample {
@@ -90,8 +98,8 @@ class ReservedWords is SyntaxExample {
   }
 
   foo {
-    // `var`
-    var n = 27
+    // `let`
+    let n = 27
     // `while`, `if`, `else`
     while (n != 1) if (n % 2 == 0) n = n / 2 else n = 3 * n + 1
 
@@ -161,20 +169,20 @@ class Literals is SyntaxExample {
   nothing { null }
 
   lists {
-    var list = [1, "banana", true]
+    let list = [1, "banana", true]
     list[0] = 5
     list[1..2]
   }
 
   maps {
-    var stringMap = {
+    let stringMap = {
       "George": "Harrison",
       "John": "Lennon",
       "Paul": "McCartney",
       "Ringo": "Starr"
     }
-    var a = 1
-    var weirdMap = {
+    let a = 1
+    let weirdMap = {
       true: 1,
       false: 0,
       null: -1,
