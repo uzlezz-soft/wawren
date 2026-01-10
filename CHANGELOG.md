@@ -1,3 +1,15 @@
+## 0.5.1
+
+### LANGUAGE
+- Add `record`, `readonly` keywords
+- Records:
+  - `record User(name, email) {}`
+  - Constuctors `empty()`, `new(name, email)`
+  - Getters and setters for `name`, `email`
+  - You can define it like `record readonly User(name, email) {}` to remove setters
+  - `withName(newName)`, `withEmail(newEmail)`, etc methods that return a copy of that record with new value
+  - `clone()`
+
 ## 0.5.0
 
 ### Language
